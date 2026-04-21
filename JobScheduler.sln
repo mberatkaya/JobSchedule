@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobScheduler", "JobScheduler\JobScheduler.csproj", "{B2E0DD80-8C91-4313-9EF9-AF2E67E48CF5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobScheduler.Tests", "JobScheduler.Tests\JobScheduler.Tests.csproj", "{8ACCE868-9D19-41ED-846E-C33947108E1A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{B2E0DD80-8C91-4313-9EF9-AF2E67E48CF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B2E0DD80-8C91-4313-9EF9-AF2E67E48CF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B2E0DD80-8C91-4313-9EF9-AF2E67E48CF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8ACCE868-9D19-41ED-846E-C33947108E1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8ACCE868-9D19-41ED-846E-C33947108E1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8ACCE868-9D19-41ED-846E-C33947108E1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8ACCE868-9D19-41ED-846E-C33947108E1A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
