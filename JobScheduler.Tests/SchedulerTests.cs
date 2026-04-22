@@ -25,6 +25,45 @@ public sealed class SchedulerTests
         ];
     }
 
+    public static IEnumerable<object[]> DifferentGraphScenarios()
+    {
+        yield return
+        [
+            new[]
+            {
+                new TaskDefinition("A", 4),
+                new TaskDefinition("B", 1),
+                new TaskDefinition("C", 3, new[] { "A" }),
+                new TaskDefinition("D", 6, new[] { "A" }),
+                new TaskDefinition("E", 2, new[] { "B", "C" }),
+                new TaskDefinition("F", 1, new[] { "D", "E" })
+            },
+            11,
+            new[] { "A", "D", "F" },
+            "F",
+            10,
+            11
+        ];
+
+        yield return
+        [
+            new[]
+            {
+                new TaskDefinition("P", 2),
+                new TaskDefinition("Q", 5),
+                new TaskDefinition("R", 4, new[] { "P" }),
+                new TaskDefinition("S", 1, new[] { "P" }),
+                new TaskDefinition("T", 3, new[] { "Q", "S" }),
+                new TaskDefinition("U", 2, new[] { "R", "T" })
+            },
+            10,
+            new[] { "Q", "T", "U" },
+            "U",
+            8,
+            10
+        ];
+    }
+
     [Fact]
     public void Schedule_ReturnsCriticalPathForSampleCase()
     {
@@ -79,6 +118,25 @@ public sealed class SchedulerTests
 
         Assert.Equal(6, result.MinimumCompletionTime);
         Assert.Equal(["B"], result.CriticalPath);
+        AssertDependenciesRespected(result.TopologicalOrder, tasks);
+    }
+
+    [Theory]
+    [MemberData(nameof(DifferentGraphScenarios))]
+    public void Schedule_HandlesDifferentDependencyGraphs(
+        TaskDefinition[] tasks,
+        int expectedMinimumCompletionTime,
+        string[] expectedCriticalPath,
+        string finishTaskId,
+        int expectedFinishTaskStart,
+        int expectedFinishTaskEnd)
+    {
+        var result = new Scheduler().Schedule(tasks);
+
+        Assert.Equal(expectedMinimumCompletionTime, result.MinimumCompletionTime);
+        Assert.Equal(expectedCriticalPath, result.CriticalPath);
+        Assert.Equal(expectedFinishTaskStart, result.TaskTimings[finishTaskId].EarliestStart);
+        Assert.Equal(expectedFinishTaskEnd, result.TaskTimings[finishTaskId].EarliestFinish);
         AssertDependenciesRespected(result.TopologicalOrder, tasks);
     }
 
