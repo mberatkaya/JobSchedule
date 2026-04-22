@@ -189,12 +189,42 @@ public sealed class SchedulerTests
     }
 
     [Fact]
+    public void Schedule_ReturnsSingleTaskAsWholeCriticalPath()
+    {
+        var tasks = new[]
+        {
+            new TaskDefinition("OnlyTask", 7)
+        };
+
+        var result = new Scheduler().Schedule(tasks);
+
+        Assert.Equal(7, result.MinimumCompletionTime);
+        Assert.Equal(["OnlyTask"], result.TopologicalOrder);
+        Assert.Equal(["OnlyTask"], result.CriticalPath);
+        Assert.Equal(0, result.TaskTimings["OnlyTask"].EarliestStart);
+        Assert.Equal(7, result.TaskTimings["OnlyTask"].EarliestFinish);
+    }
+
+    [Fact]
     public void Schedule_ThrowsWhenTaskIdsAreDuplicated()
     {
         var tasks = new[]
         {
             new TaskDefinition("A", 2),
             new TaskDefinition("A", 4)
+        };
+
+        var act = () => new Scheduler().Schedule(tasks);
+
+        Assert.Throws<ArgumentException>(act);
+    }
+
+    [Fact]
+    public void Schedule_ThrowsWhenDurationIsNegative()
+    {
+        var tasks = new[]
+        {
+            new TaskDefinition("A", -1)
         };
 
         var act = () => new Scheduler().Schedule(tasks);
@@ -210,6 +240,19 @@ public sealed class SchedulerTests
             new TaskDefinition("A", 2, new[] { "C" }),
             new TaskDefinition("B", 3, new[] { "A" }),
             new TaskDefinition("C", 1, new[] { "B" })
+        };
+
+        var act = () => new Scheduler().Schedule(tasks);
+
+        Assert.Throws<InvalidOperationException>(act);
+    }
+
+    [Fact]
+    public void Schedule_ThrowsWhenTaskDependsOnItself()
+    {
+        var tasks = new[]
+        {
+            new TaskDefinition("A", 2, new[] { "A" })
         };
 
         var act = () => new Scheduler().Schedule(tasks);
