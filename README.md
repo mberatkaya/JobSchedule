@@ -16,3 +16,9 @@ Run the sample case with:
 ```bash
 dotnet run --project JobScheduler/JobScheduler.csproj
 ```
+
+Run the tests with:
+
+```bash
+dotnet test JobScheduler.sln
+```
