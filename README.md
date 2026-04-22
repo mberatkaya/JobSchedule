@@ -101,16 +101,43 @@ The scheduler returns:
 
 ## Running the sample
 
+### Using .NET CLI
+
 ```bash
 dotnet run --project JobScheduler/JobScheduler.csproj
+```
+
+### Using Docker
+
+Build and run with Docker:
+
+```bash
+docker build -t jobscheduler .
+docker run --rm jobscheduler
+```
+
+Or use Docker Compose:
+
+```bash
+docker-compose up
 ```
 
 Expected sample output is aligned with the chosen interpretation and reports a minimum completion time of `11`.
 
 ## Running the tests
 
+### Using .NET CLI
+
 ```bash
 dotnet test JobScheduler.sln
+```
+
+### Using Docker
+
+The Dockerfile automatically runs tests during the build process. To run tests explicitly:
+
+```bash
+docker build --target build -t jobscheduler-test .
 ```
 
 ## Test coverage
