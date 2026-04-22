@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  jobscheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jobscheduler:latest
+    container_name: jobscheduler-app
+    restart: unless-stopped
