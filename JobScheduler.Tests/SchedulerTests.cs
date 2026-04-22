@@ -61,6 +61,51 @@ public sealed class SchedulerTests
     }
 
     [Fact]
+    public void Schedule_PicksLongerBranchInBranchingGraph()
+    {
+        var tasks = new[]
+        {
+            new TaskDefinition("A", 2),
+            new TaskDefinition("B", 5, new[] { "A" }),
+            new TaskDefinition("C", 1, new[] { "A" }),
+            new TaskDefinition("D", 3, new[] { "B", "C" })
+        };
+
+        var result = new Scheduler().Schedule(tasks);
+
+        Assert.Equal(10, result.MinimumCompletionTime);
+        Assert.Equal(["A", "B", "D"], result.CriticalPath);
+        Assert.Equal(7, result.TaskTimings["D"].EarliestStart);
+        Assert.Equal(10, result.TaskTimings["D"].EarliestFinish);
+        AssertDependenciesRespected(result.TopologicalOrder, tasks);
+    }
+
+    [Fact]
+    public void Schedule_ReturnsEmptyResultWhenTaskListIsEmpty()
+    {
+        var result = new Scheduler().Schedule(Array.Empty<TaskDefinition>());
+
+        Assert.Equal(0, result.MinimumCompletionTime);
+        Assert.Empty(result.TopologicalOrder);
+        Assert.Empty(result.CriticalPath);
+        Assert.Empty(result.TaskTimings);
+    }
+
+    [Fact]
+    public void Schedule_ThrowsWhenTaskIdsAreDuplicated()
+    {
+        var tasks = new[]
+        {
+            new TaskDefinition("A", 2),
+            new TaskDefinition("A", 4)
+        };
+
+        var act = () => new Scheduler().Schedule(tasks);
+
+        Assert.Throws<ArgumentException>(act);
+    }
+
+    [Fact]
     public void Schedule_ThrowsWhenGraphContainsCycle()
     {
         var tasks = new[]
