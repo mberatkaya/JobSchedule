@@ -60,6 +60,12 @@ Sample CPM-style view of the same task graph:
 
 ![Sample critical path diagram](docs/images/cpm.jpeg)
 
+This diagram is included to make the `11` result easier to see.
+It shows the earliest and latest timing values for each task, and it makes two things clear:
+
+- `A -> D -> F` is the critical path because those tasks have no slack in this schedule
+- even though `E` is done at time `6`, task `F` still cannot start before time `8` because it must also wait for `D`
+
 `E` is ready at time `6`, but `F` still has to wait for `D`, which finishes at time `8`. After that, `F` takes `3` more units, so the total job completion time becomes `11`.
 
 ## Approach
