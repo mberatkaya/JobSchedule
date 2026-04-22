@@ -115,22 +115,26 @@ dotnet test JobScheduler.sln
 
 ## Test coverage
 
-The current test suite covers both the exact prompt and a few reasonable variations around it.
+The test file now labels each case with a numbered comment header so the intent is easy to scan during review.
 
-Covered scenarios:
+Scenario list:
 
-- the prompt sample case
-- the same dependency graph with different duration values
-- different dependency graphs with different duration values
-- all tasks independent
-- a simple linear chain
-- a branching and merging graph
-- empty input
-- a single task
-- duplicate task ids
-- negative duration
-- cyclic dependency graph
-- self-dependency
-- missing dependency reference
+1. Prompt sample case: Verifies the main example from the prompt and checks the expected completion time, critical path, and finish time for the last task.
+2. Same graph, different durations: Verifies that the scheduler still computes the right answer when the dependency graph stays the same but durations change.
+3. All tasks independent: Verifies that the minimum completion time comes from the longest single task when nothing depends on anything else.
+4. Different dependency graphs: Verifies that the algorithm still works on alternative graph shapes, not only on the prompt graph.
+5. Simple linear chain: Verifies that a pure chain returns the whole chain as both the topological order and the critical path.
+6. Branching graph: Verifies that the longer branch is chosen when two branches merge into the same task.
+7. Empty input: Verifies that an empty task list returns an empty result instead of failing.
+8. Single task: Verifies that one task is handled as a complete schedule on its own.
+9. Disconnected subgraphs: Verifies that the scheduler picks the longest path even when the input contains separate independent components.
+10. Multi-stage merge: Verifies that a merge waits for the latest dependency finish time before starting the next task.
+11. Duplicate task ids: Verifies that duplicate ids are rejected during validation.
+12. Negative duration: Verifies that invalid negative durations are rejected.
+13. Cyclic graph: Verifies that the scheduler throws when there is no valid topological order.
+14. Self-dependency: Verifies that a task depending on itself is treated as an invalid cycle.
+15. Missing dependency: Verifies that referencing a task id that does not exist fails fast.
+16. Null task collection: Verifies that the public API rejects a null input collection immediately.
+17. Blank task id: Verifies that empty or whitespace-only ids are rejected so every task remains addressable in the graph.
 
 For success cases, the tests also verify that the returned order respects dependency direction, so the assertions are not tied to one brittle exact ordering unless the graph shape makes the order deterministic.

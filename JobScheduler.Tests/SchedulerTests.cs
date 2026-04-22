@@ -64,6 +64,7 @@ public sealed class SchedulerTests
         ];
     }
 
+    // Scenario 01: Prompt sample graph returns the expected critical path and finish time.
     [Fact]
     public void Schedule_ReturnsCriticalPathForSampleCase()
     {
@@ -86,6 +87,7 @@ public sealed class SchedulerTests
         AssertDependenciesRespected(result.TopologicalOrder, tasks);
     }
 
+    // Scenario 02: The same graph should still work when task durations change.
     [Theory]
     [MemberData(nameof(PromptGraphDurationScenarios))]
     public void Schedule_HandlesDifferentDurationsOnSameDependencyGraph(
@@ -104,6 +106,7 @@ public sealed class SchedulerTests
         AssertDependenciesRespected(result.TopologicalOrder, tasks);
     }
 
+    // Scenario 03: Independent tasks should finish based on the longest single task.
     [Fact]
     public void Schedule_UsesLongestTaskWhenEverythingIsIndependent()
     {
@@ -121,6 +124,7 @@ public sealed class SchedulerTests
         AssertDependenciesRespected(result.TopologicalOrder, tasks);
     }
 
+    // Scenario 04: Different dependency graphs should still produce valid timings and a valid path.
     [Theory]
     [MemberData(nameof(DifferentGraphScenarios))]
     public void Schedule_HandlesDifferentDependencyGraphs(
@@ -140,6 +144,7 @@ public sealed class SchedulerTests
         AssertDependenciesRespected(result.TopologicalOrder, tasks);
     }
 
+    // Scenario 05: A simple chain should return the whole chain as the critical path.
     [Fact]
     public void Schedule_ReturnsWholeChainWhenTasksDependOnEachOther()
     {
@@ -157,6 +162,7 @@ public sealed class SchedulerTests
         Assert.Equal(["A", "B", "C"], result.CriticalPath);
     }
 
+    // Scenario 06: In a branching graph, the scheduler should pick the longer branch.
     [Fact]
     public void Schedule_PicksLongerBranchInBranchingGraph()
     {
@@ -177,6 +183,7 @@ public sealed class SchedulerTests
         AssertDependenciesRespected(result.TopologicalOrder, tasks);
     }
 
+    // Scenario 07: An empty task list should return an empty result without errors.
     [Fact]
     public void Schedule_ReturnsEmptyResultWhenTaskListIsEmpty()
     {
@@ -188,6 +195,7 @@ public sealed class SchedulerTests
         Assert.Empty(result.TaskTimings);
     }
 
+    // Scenario 08: A single task should become the full result by itself.
     [Fact]
     public void Schedule_ReturnsSingleTaskAsWholeCriticalPath()
     {
@@ -205,6 +213,53 @@ public sealed class SchedulerTests
         Assert.Equal(7, result.TaskTimings["OnlyTask"].EarliestFinish);
     }
 
+    // Scenario 09: Disconnected subgraphs should use the longest component as the critical path.
+    [Fact]
+    public void Schedule_PicksLongestPathAcrossDisconnectedSubgraphs()
+    {
+        var tasks = new[]
+        {
+            new TaskDefinition("A", 2),
+            new TaskDefinition("B", 2, new[] { "A" }),
+            new TaskDefinition("X", 1),
+            new TaskDefinition("Y", 3, new[] { "X" }),
+            new TaskDefinition("Z", 4, new[] { "Y" })
+        };
+
+        var result = new Scheduler().Schedule(tasks);
+
+        Assert.Equal(8, result.MinimumCompletionTime);
+        Assert.Equal(["X", "Y", "Z"], result.CriticalPath);
+        Assert.Equal(4, result.TaskTimings["Z"].EarliestStart);
+        Assert.Equal(8, result.TaskTimings["Z"].EarliestFinish);
+        AssertDependenciesRespected(result.TopologicalOrder, tasks);
+    }
+
+    // Scenario 10: A deeper merge should wait for the latest dependency before continuing.
+    [Fact]
+    public void Schedule_UsesLatestDependencyFinishInMultiStageMerge()
+    {
+        var tasks = new[]
+        {
+            new TaskDefinition("A", 2),
+            new TaskDefinition("B", 4),
+            new TaskDefinition("C", 3, new[] { "A" }),
+            new TaskDefinition("D", 5, new[] { "B" }),
+            new TaskDefinition("E", 2, new[] { "C", "D" }),
+            new TaskDefinition("F", 1, new[] { "E" })
+        };
+
+        var result = new Scheduler().Schedule(tasks);
+
+        Assert.Equal(12, result.MinimumCompletionTime);
+        Assert.Equal(["B", "D", "E", "F"], result.CriticalPath);
+        Assert.Equal(9, result.TaskTimings["E"].EarliestStart);
+        Assert.Equal(11, result.TaskTimings["E"].EarliestFinish);
+        Assert.Equal(12, result.TaskTimings["F"].EarliestFinish);
+        AssertDependenciesRespected(result.TopologicalOrder, tasks);
+    }
+
+    // Scenario 11: Duplicate task ids should be rejected during validation.
     [Fact]
     public void Schedule_ThrowsWhenTaskIdsAreDuplicated()
     {
@@ -219,6 +274,7 @@ public sealed class SchedulerTests
         Assert.Throws<ArgumentException>(act);
     }
 
+    // Scenario 12: Negative durations should be rejected during validation.
     [Fact]
     public void Schedule_ThrowsWhenDurationIsNegative()
     {
@@ -232,6 +288,7 @@ public sealed class SchedulerTests
         Assert.Throws<ArgumentException>(act);
     }
 
+    // Scenario 13: Cyclic graphs should fail because there is no valid topological order.
     [Fact]
     public void Schedule_ThrowsWhenGraphContainsCycle()
     {
@@ -247,6 +304,7 @@ public sealed class SchedulerTests
         Assert.Throws<InvalidOperationException>(act);
     }
 
+    // Scenario 14: Self-dependency should be treated as a cycle and rejected.
     [Fact]
     public void Schedule_ThrowsWhenTaskDependsOnItself()
     {
@@ -260,12 +318,38 @@ public sealed class SchedulerTests
         Assert.Throws<InvalidOperationException>(act);
     }
 
+    // Scenario 15: Missing dependency ids should fail fast during validation.
     [Fact]
     public void Schedule_ThrowsWhenDependencyDoesNotExist()
     {
         var tasks = new[]
         {
             new TaskDefinition("A", 2, new[] { "X" })
+        };
+
+        var act = () => new Scheduler().Schedule(tasks);
+
+        Assert.Throws<ArgumentException>(act);
+    }
+
+    // Scenario 16: A null task collection should be rejected immediately.
+    [Fact]
+    public void Schedule_ThrowsWhenTasksArgumentIsNull()
+    {
+        IEnumerable<TaskDefinition> tasks = null!;
+
+        var act = () => new Scheduler().Schedule(tasks);
+
+        Assert.Throws<ArgumentNullException>(act);
+    }
+
+    // Scenario 17: Blank task ids should be rejected to keep the graph addressable.
+    [Fact]
+    public void Schedule_ThrowsWhenTaskIdIsBlank()
+    {
+        var tasks = new[]
+        {
+            new TaskDefinition("   ", 2)
         };
 
         var act = () => new Scheduler().Schedule(tasks);
