@@ -56,6 +56,10 @@ The case text says `8`, but under a parallel scheduling interpretation `F` canno
 | E | B, C | 4 | 2 | 6 |
 | F | D, E | 8 | 3 | 11 |
 
+Sample CPM-style view of the same task graph:
+
+![Sample critical path diagram](docs/images/cpm.jpeg)
+
 `E` is ready at time `6`, but `F` still has to wait for `D`, which finishes at time `8`. After that, `F` takes `3` more units, so the total job completion time becomes `11`.
 
 ## Approach
