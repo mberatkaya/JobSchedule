@@ -4,6 +4,27 @@ namespace JobScheduler.Tests;
 
 public sealed class SchedulerTests
 {
+    public static IEnumerable<object[]> PromptGraphDurationScenarios()
+    {
+        yield return
+        [
+            CreatePromptGraph(1, 5, 7, 2, 4, 1),
+            12,
+            new[] { "C", "E", "F" },
+            11,
+            12
+        ];
+
+        yield return
+        [
+            CreatePromptGraph(6, 1, 2, 4, 3, 2),
+            12,
+            new[] { "A", "D", "F" },
+            10,
+            12
+        ];
+    }
+
     [Fact]
     public void Schedule_ReturnsCriticalPathForSampleCase()
     {
@@ -23,6 +44,24 @@ public sealed class SchedulerTests
         Assert.Equal(["A", "D", "F"], result.CriticalPath);
         Assert.Equal(8, result.TaskTimings["F"].EarliestStart);
         Assert.Equal(11, result.TaskTimings["F"].EarliestFinish);
+        AssertDependenciesRespected(result.TopologicalOrder, tasks);
+    }
+
+    [Theory]
+    [MemberData(nameof(PromptGraphDurationScenarios))]
+    public void Schedule_HandlesDifferentDurationsOnSameDependencyGraph(
+        TaskDefinition[] tasks,
+        int expectedMinimumCompletionTime,
+        string[] expectedCriticalPath,
+        int expectedFinishTaskStart,
+        int expectedFinishTaskEnd)
+    {
+        var result = new Scheduler().Schedule(tasks);
+
+        Assert.Equal(expectedMinimumCompletionTime, result.MinimumCompletionTime);
+        Assert.Equal(expectedCriticalPath, result.CriticalPath);
+        Assert.Equal(expectedFinishTaskStart, result.TaskTimings["F"].EarliestStart);
+        Assert.Equal(expectedFinishTaskEnd, result.TaskTimings["F"].EarliestFinish);
         AssertDependenciesRespected(result.TopologicalOrder, tasks);
     }
 
@@ -150,5 +189,24 @@ public sealed class SchedulerTests
                     $"Expected '{dependency}' to come before '{task.Id}'.");
             }
         }
+    }
+
+    private static TaskDefinition[] CreatePromptGraph(
+        int durationA,
+        int durationB,
+        int durationC,
+        int durationD,
+        int durationE,
+        int durationF)
+    {
+        return
+        [
+            new TaskDefinition("A", durationA),
+            new TaskDefinition("B", durationB),
+            new TaskDefinition("C", durationC),
+            new TaskDefinition("D", durationD, new[] { "A" }),
+            new TaskDefinition("E", durationE, new[] { "B", "C" }),
+            new TaskDefinition("F", durationF, new[] { "D", "E" })
+        ];
     }
 }
